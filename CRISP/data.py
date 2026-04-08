@@ -163,10 +163,15 @@ class Dataset:
             data = sc.read(data)
         logging.info(f"Finished data loading.")
 
-        try:
-            self.genes = torch.Tensor(data.X.A)
-        except:
-            self.genes = torch.Tensor(data.X)
+        # SciPy >=1.17 may not expose the `.A` shortcut on sparse matrices.
+        # Convert sparse-backed matrices explicitly and fall back to ndarray.
+        if hasattr(data.X, "toarray"):
+            genes_np = data.X.toarray()
+        elif hasattr(data.X, "A"):
+            genes_np = data.X.A
+        else:
+            genes_np = np.asarray(data.X)
+        self.genes = torch.tensor(genes_np, dtype=torch.float)
 
         self.var_names = data.var_names
         if use_FM:

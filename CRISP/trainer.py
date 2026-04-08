@@ -164,10 +164,13 @@ class Trainer:
         
         self.autoencoder.eval()
         cell_embs = torch.tensor(adata_ctrl.obsm[FM_emb],device=self.device)
-        try:
-            genes = torch.tensor(adata_ctrl.X.A,device=self.device)
-        except:
-            genes = torch.tensor(adata_ctrl.X,device=self.device)
+        if hasattr(adata_ctrl.X, "toarray"):
+            genes_np = adata_ctrl.X.toarray()
+        elif hasattr(adata_ctrl.X, "A"):
+            genes_np = adata_ctrl.X.A
+        else:
+            genes_np = np.asarray(adata_ctrl.X)
+        genes = torch.tensor(genes_np, device=self.device)
         
         n_rows = cell_embs.shape[0]
         if (drug_name is not None) and (drug_name in ref_drug_dict.keys()):
